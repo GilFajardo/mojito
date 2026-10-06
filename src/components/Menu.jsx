@@ -4,93 +4,136 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 
 const Menu = () => {
-    const contentRef = useRef();
+  const contentRef = useRef();
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-    const [currentIndex, setCurrentIndex] = useState(0);
+  // Animaciones de GSAP sincronizadas con el cambio de slide
+  useGSAP(
+    () => {
+      gsap.fromTo('#title', { opacity: 0 }, { opacity: 1, duration: 1 });
 
-    useGSAP(() => {
-        gsap.fromTo('#title', {opacity: 0 }, {opacity: 1, duration: 1});
-        gsap.fromTo('.cocktail img', {opacity: 0, xPercent: -100}, {
-            xPercent: 0, opacity: 1, duration: 1, ease: 'power1.inOut'
-        })
-        gsap.fromTo('.details h2', { yPercent: 100, opacity: 0},
-            {yPercent:0, Opacity: 100, ease: 'power1.inOut'
-        })
-        gsap.fromTo('.details p', { yPercent: 100, opacity: 0},
-            {yPercent:0, Opacity: 100, ease: 'power1.inOut'
-        })
-    }, [currentIndex]);
+      gsap.fromTo(
+        '.cocktail img',
+        { opacity: 0, xPercent: -100 },
+        { xPercent: 0, opacity: 1, duration: 1, ease: 'power1.inOut' }
+      );
 
-    const totalCocktails = allCocktails.length; 
+      // Corrección: 'opacity: 1' en lugar de 'Opacity: 100'
+      gsap.fromTo(
+        '.details h2',
+        { yPercent: 100, opacity: 0 },
+        { yPercent: 0, opacity: 1, ease: 'power1.inOut' }
+      );
 
-    const goToSlide = (index) => {
-        const newIndex = (index + totalCocktails) % totalCocktails;
-        
-        setCurrentIndex(newIndex);
-    }
+      gsap.fromTo(
+        '.details p',
+        { yPercent: 100, opacity: 0 },
+        { yPercent: 0, opacity: 1, ease: 'power1.inOut' }
+      );
+    },
+    { dependencies: [currentIndex], scope: contentRef }
+  );
 
-    const getCocktailAlt = (indexOffset) => {
-        return allCocktails[(currentIndex + indexOffset + totalCocktails) % totalCocktails]
-    }
+  const totalCocktails = allCocktails.length;
 
-    const currentCocktail = getCocktailAlt(0);
-    const prevCocktail = getCocktailAlt(-1);
-    const nextCocktail = getCocktailAlt(1);
+  const goToSlide = (index) => {
+    const newIndex = (index + totalCocktails) % totalCocktails;
+    setCurrentIndex(newIndex);
+  };
 
-    return (
-        <section id="menu" aria-labelledby="menu-heading">
-            <img src="/images/slider-left-leaf.png" alt="left-leaf" id="m-left-leaf"/>
-            <img src="/images/slider-right-leaf.png" alt="right-leaf" id="m-right-leaf"/>
+  const getCocktailAlt = (indexOffset) => {
+    return allCocktails[(currentIndex + indexOffset + totalCocktails) % totalCocktails];
+  };
 
-            <h2 id="menu-heading" className="sr-only">
-                Cocktail Menu
-            </h2>
+  const currentCocktail = getCocktailAlt(0);
+  const prevCocktail = getCocktailAlt(-1);
+  const nextCocktail = getCocktailAlt(1);
 
-            <nav className="cocktail-tabs" aria-label="Cocktail Navigation">
-                {allCocktails.map((cocktail, index) => {
-                    const isActive = index === currentIndex;
+  // Formateador dinámico para las imágenes provenientes deconstants/index.js
+  const formatImagePath = (path) => {
+    if (!path) return '';
+    return path.startsWith('/')
+      ? `${import.meta.env.BASE_URL}${path.slice(1)}`
+      : `${import.meta.env.BASE_URL}${path}`;
+  };
 
-                    return (
-                        <button key={cocktail.id} className={`${isActive ? 'text-white border-white' : 'text-white/50 border-white/50'}`}
-                        onClick={() => goToSlide(index)}
-                        >
-                            {cocktail.name}
-                        </button>
-                    )
-                })}
-            </nav>
+  return (
+    <section id="menu" aria-labelledby="menu-heading" ref={contentRef}>
+      {/* Rutas adaptadas con import.meta.env.BASE_URL */}
+      <img
+        src={`${import.meta.env.BASE_URL}images/slider-left-leaf.png`}
+        alt="left-leaf"
+        id="m-left-leaf"
+      />
+      <img
+        src={`${import.meta.env.BASE_URL}images/slider-right-leaf.png`}
+        alt="right-leaf"
+        id="m-right-leaf"
+      />
 
-            <div className="content">
-                <div className="arrows">
-                    <button className="text-left" onClick={() => goToSlide(currentIndex -1)}>
-                        <span>{prevCocktail.name}</span>
-                        <img src="/images/right-arrow.png" alt="right-arrow" aria-hidden="true"/>
-                    </button>
+      <h2 id="menu-heading" className="sr-only">
+        Cocktail Menu
+      </h2>
 
-                    <button className="text-left" onClick={() => goToSlide(currentIndex + 1)}>
-                        <span>{nextCocktail.name}</span>
-                        <img src="/images/left-arrow.png" alt="left-arrow" aria-hidden="true"/>
-                    </button>
-                </div>
+      <nav className="cocktail-tabs" aria-label="Cocktail Navigation">
+        {allCocktails.map((cocktail, index) => {
+          const isActive = index === currentIndex;
 
-            <div className="cocktail">
-                <img src={currentCocktail.image} className="object-contain"/>
-            </div>
+          return (
+            <button
+              key={cocktail.id}
+              className={`${isActive ? 'text-white border-white' : 'text-white/50 border-white/50'}`}
+              onClick={() => goToSlide(index)}
+            >
+              {cocktail.name}
+            </button>
+          );
+        })}
+      </nav>
 
-            <div className="recipe" >
-                <div ref={contentRef} className="info">
-                    <p>Recipe for:</p>
-                    <p id="title">{currentCocktail.name}</p>
-                </div>
+      <div className="content">
+        <div className="arrows">
+          <button className="text-left" onClick={() => goToSlide(currentIndex - 1)}>
+            <span>{prevCocktail.name}</span>
+            <img
+              src={`${import.meta.env.BASE_URL}images/right-arrow.png`}
+              alt="right-arrow"
+              aria-hidden="true"
+            />
+          </button>
 
-                <div className="details">
-                    <h2>{currentCocktail.title}</h2>
-                    <p>{currentCocktail.description}</p>
-                </div>
-            </div>
-            </div>
-        </section>
-    )
-}
+          <button className="text-left" onClick={() => goToSlide(currentIndex + 1)}>
+            <span>{nextCocktail.name}</span>
+            <img
+              src={`${import.meta.env.BASE_URL}images/left-arrow.png`}
+              alt="left-arrow"
+              aria-hidden="true"
+            />
+          </button>
+        </div>
 
-export default Menu
+        <div className="cocktail">
+          <img
+            src={formatImagePath(currentCocktail.image)}
+            alt={currentCocktail.name}
+            className="object-contain"
+          />
+        </div>
+
+        <div className="recipe">
+          <div className="info">
+            <p>Recipe for:</p>
+            <p id="title">{currentCocktail.name}</p>
+          </div>
+
+          <div className="details">
+            <h2>{currentCocktail.title}</h2>
+            <p>{currentCocktail.description}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default Menu;
