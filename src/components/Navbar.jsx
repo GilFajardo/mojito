@@ -1,138 +1,44 @@
-import { allCocktails } from '../../constants/index.js';
-import { useRef, useState } from 'react';
-import { useGSAP } from '@gsap/react';
+import { navLinks } from '../../constants/index.js';
 import gsap from 'gsap';
+import {useGSAP} from '@gsap/react';
 
-const Menu = () => {
-  const contentRef = useRef();
-  const [currentIndex, setCurrentIndex] = useState(0);
 
-  useGSAP(
-    () => {
-      gsap.fromTo('#title', { opacity: 0 }, { opacity: 1, duration: 1 });
-      
-      gsap.fromTo(
-        '.cocktail img',
-        { opacity: 0, xPercent: -100 },
-        { xPercent: 0, opacity: 1, duration: 1, ease: 'power1.inOut' }
-      );
+const Navbar = () => {
 
-      // Corrección: 'opacity: 1' en lugar de 'Opacity: 100'
-      gsap.fromTo(
-        '.details h2',
-        { yPercent: 100, opacity: 0 },
-        { yPercent: 0, opacity: 1, ease: 'power1.inOut' }
-      );
+    useGSAP(() => {
+        const navTween = gsap.timeline({
+            scrollTrigger:{
+                 trigger : 'nav',
+                 start: 'bottom top'
+            }
+        });
 
-      gsap.fromTo(
-        '.details p',
-        { yPercent: 100, opacity: 0 },
-        { yPercent: 0, opacity: 1, ease: 'power1.inOut' }
-      );
-    },
-    { dependencies: [currentIndex], scope: contentRef } // Scope delimitado al contenedor
-  );
+        navTween.fromTo('nav', {backgroundColor: 'transparent'},{
+            backgroundColor: '#00000050',
+            backgroundFilter: 'blur(10px)',
+            duration: 1,
+            ease: 'power1.inOut'   
+        });
+    })
 
-  const totalCocktails = allCocktails.length;
+    return (
+        <nav>
+            <div>
+                <a href="#home" className="flex items-center gap-2">
+                    <img src={`${import.meta.env.BASE_URL}images/logo.png`} alt="logo" />
+                    <p>Velvet Pour</p>
+                </a>
 
-  const goToSlide = (index) => {
-    const newIndex = (index + totalCocktails) % totalCocktails;
-    setCurrentIndex(newIndex);
-  };
+                <ul>
+                    {navLinks.map((link) => (
+                        <li key={link.id}>
+                            <a href={`#${link.id}`}>{link.title}</a>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </nav>
+    )
+}
 
-  const getCocktailAlt = (indexOffset) => {
-    return allCocktails[(currentIndex + indexOffset + totalCocktails) % totalCocktails];
-  };
-
-  const currentCocktail = getCocktailAlt(0);
-  const prevCocktail = getCocktailAlt(-1);
-  const nextCocktail = getCocktailAlt(1);
-
-  // Helper para resolver la ruta si viene como '/images/...' desde constants
-  const formatImagePath = (path) => {
-    if (!path) return '';
-    return path.startsWith('/')
-      ? `${import.meta.env.BASE_URL}${path.slice(1)}`
-      : `${import.meta.env.BASE_URL}${path}`;
-  };
-
-  return (
-    <section id="menu" aria-labelledby="menu-heading" ref={contentRef}>
-      {/* Corrección de rutas con BASE_URL */}
-      <img
-        src={`${import.meta.env.BASE_URL}images/slider-left-leaf.png`}
-        alt="left-leaf"
-        id="m-left-leaf"
-      />
-      <img
-        src={`${import.meta.env.BASE_URL}images/slider-right-leaf.png`}
-        alt="right-leaf"
-        id="m-right-leaf"
-      />
-
-      <h2 id="menu-heading" className="sr-only">
-        Cocktail Menu
-      </h2>
-
-      <nav className="cocktail-tabs" aria-label="Cocktail Navigation">
-        {allCocktails.map((cocktail, index) => {
-          const isActive = index === currentIndex;
-
-          return (
-            <button
-              key={cocktail.id}
-              className={`${isActive ? 'text-white border-white' : 'text-white/50 border-white/50'}`}
-              onClick={() => goToSlide(index)}
-            >
-              {cocktail.name}
-            </button>
-          );
-        })}
-      </nav>
-
-      <div className="content">
-        <div className="arrows">
-          <button className="text-left" onClick={() => goToSlide(currentIndex - 1)}>
-            <span>{prevCocktail.name}</span>
-            <img
-              src={`${import.meta.env.BASE_URL}images/right-arrow.png`}
-              alt="right-arrow"
-              aria-hidden="true"
-            />
-          </button>
-
-          <button className="text-left" onClick={() => goToSlide(currentIndex + 1)}>
-            <span>{nextCocktail.name}</span>
-            <img
-              src={`${import.meta.env.BASE_URL}images/left-arrow.png`}
-              alt="left-arrow"
-              aria-hidden="true"
-            />
-          </button>
-        </div>
-
-        <div className="cocktail">
-          <img
-            src={formatImagePath(currentCocktail.image)}
-            alt={currentCocktail.name}
-            className="object-contain"
-          />
-        </div>
-
-        <div className="recipe">
-          <div className="info">
-            <p>Recipe for:</p>
-            <p id="title">{currentCocktail.name}</p>
-          </div>
-
-          <div className="details">
-            <h2>{currentCocktail.title}</h2>
-            <p>{currentCocktail.description}</p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-export default Menu;
+export default Navbar
